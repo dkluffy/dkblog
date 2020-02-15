@@ -1,4 +1,4 @@
-# dkblog
+# dklog
 
 ## 立个FLAG
 
@@ -8,11 +8,12 @@
 今天看到GITHUB还有CLI工具 [cli](https://github.com/cli/cli)
 可以直接在CLIE管理ISSUE，这更加方便了
 
-以后我也要在这里写BLOG，说是BLOG，更应该说是笔记吧
+以后我也要在这里写BLOG，说是BLOG，更应该说是笔记或者LOG吧
 
-* 未整理的笔记会在ISSUE里，整理后关掉
-* 整理过的存档放在REPO里
-* 不定期整理
+以下是备忘，给自己设置的操作规范
+* 不重要的issue及时close
+* 比较完整且整理过的放在REPO里
+* 不定期用API备份整个ISSUE放到REPO里(TODO:工具还没有)
 
 
 FLAG @2020 / 02 / 15 
