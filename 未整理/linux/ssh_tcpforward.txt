@@ -1,0 +1,22 @@
+ahost#ssh -N -R *:7777:chost:80 root@bhost
+反向绑定,在远程机器bhost上监听一个端口7777，任何bhost:7777的流量会被转发到本地机器ahost上，然后給chost
+request -->bhost:7777-->ahost:*-->chost:80
+应用场景：
+bhost --> chost NG
+bhost --> ahost NG
+ahost --> bhost OK
+ahost --> chost OK
+ex:
+bhost--[firewall:static nat to public,deny bhost to any ] -- ahost,chost
+bhost--[firewall:static nat to public,deny bhost to any ] -- ahost[ahost=chost] 
+
+
+bhost#ssh -N -f -L 6666:chost:22 dkluffy@ahost
+正向绑定，在本地机器bhost上监听一个端口6666，任何bhost:6666的流量会被转发到本地机器ahost上，然后給chost
+request -->bhost:6666-->ahost:*-->chost:22
+应用场景:
+bhost --> chost NG
+bhost --> ahost OK 
+ahost --> chost OK
+ahost --> bhost OK/NG
+这里，很简单bhost能访问到ahost,所以bhost可以用ahost当跳板访问chost

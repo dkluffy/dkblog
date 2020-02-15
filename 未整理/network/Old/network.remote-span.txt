@@ -1,0 +1,123 @@
+跨交换机监控：
+SW01--SW02（PORTX）--[MONITOR]
+假设需要监控SW01上的某个端口或者VLAN
+1.新建在路径上的每一个交换机上建立 remote-span VLAN
+ (即用一个没有access port 的VLAN来传输镜像数据)
+ vlan 500
+  remote-span
+2.在SW上建立source
+ monitor session RSPAN_source_session_number source interface/vlan (指定源）
+ monitor session RSPAN_source_session_number destination remote vlan rspan_vlan_ID（关联）
+3.monitor session RSPAN_source_session_number destination interface PORTX （重定向数据到目的出口）
+
+----------------
+RSPAN Guidelines and Restrictions
+
+These are RSPAN guidelines and restrictions:
+
+•Supervisor Engine 2 does not support RSPAN if you configure an egress SPAN source for a local SPAN session.
+
+•Supervisor Engine 2 does not support egress SPAN sources for local SPAN if you configure RSPAN.
+
+•All participating switches must be trunk-connected at Layer 2.
+
+•Any network device that supports RSPAN VLANs can be an RSPAN intermediate device.
+
+•Networks impose no limit on the number of RSPAN VLANs that the networks carry.
+
+•Intermediate network devices might impose limits on the number of RSPAN VLANs that they can support.
+
+•You must configure the RSPAN VLANs in all source, intermediate, and destination network devices. If enabled, the VLAN Trunking Protocol (VTP) can propagate configuration of VLANs numbered 1 through 1024 as RSPAN VLANs. You must manually configure VLANs numbered higher than 1024 as RSPAN VLANs on all source, intermediate, and destination network devices.
+
+•If you enable VTP and VTP pruning, RSPAN traffic is pruned in the trunks to prevent the unwanted flooding of RSPAN traffic across the network.
+
+•RSPAN VLANs can be used only for RSPAN traffic.
+
+•Do not configure a VLAN used to carry management traffic as an RSPAN VLAN.
+
+•Do not assign access ports to RSPAN VLANs. RSPAN puts access ports in an RSPAN VLAN into the suspended state.
+
+•Do not configure any ports in an RSPAN VLAN except trunk ports selected to carry RSPAN traffic.
+
+•MAC address learning is disabled in the RSPAN VLAN.
+
+•You can use output access control lists (ACLs) on the RSPAN VLAN in the RSPAN source switch to filter the traffic sent to an RSPAN destination.
+
+•RSPAN does not support BPDU monitoring.
+
+•Do not configure RSPAN VLANs as sources in VSPAN sessions.
+
+•You can configure any VLAN as an RSPAN VLAN as long as all participating network devices support configuration of RSPAN VLANs and you use the same RSPAN VLAN for each RSPAN session in all participating network devices.
+
+
+
+
+
+
+
+
+
+
+
+
+ERSPAN Guidelines and Restrictions
+
+These are ERSPAN guidelines and restrictions:
+
+•Release 12.2(18)SXE and later releases support ERSPAN.
+
+•Release 12.2(18)SXF and later releases support ERSPAN when the switch is operating in any switching mode. (CSCec70695)
+
+•Release 12.2(18)SXE and rebuilds support ERSPAN only when the switch is operating in the compact switching mode: all modules must be fabric-enabled.
+
+•The following supervisor engines support ERSPAN:
+
+–Supervisor engines manufactured with PFC3B and PFC3BXL support ERSPAN.
+
+–A WS-SUP720 (a Supervisor Engine 720 manufactured with a PFC3A) can only support ERSPAN if it has hardware version 3.2 or higher. Enter the show module version | include WS-SUP720-BASE command to display the hardware version. For example:
+
+Router# show module version | include WS-SUP720-BASE 
+ 7    2  WS-SUP720-BASE     SAD075301SZ Hw :3.2
+
+ –To confirm that your supervisor engine supports ERSPAN, enter the show asic-version slot slot_number | include ASIC|HYPERION command for the supervisor engine. For example:
+
+ Router# show asic-version slot 1 | include ASIC|HYPERION 
+ Module in slot 1 has 2 type(s) of ASICs
+         ASIC Name      Count      Version
+                  HYPERION          1      (6.0)
+
+                  Hyperion version 2.0 and higher supports ERSPAN.
+
+                  •Supervisor engine 2 does not support ERSPAN.
+
+                  •For ERSPAN packets, the "protocol type" field value in the GRE header is 0x88BE.
+
+                  •The payload of a Layer 3 ERSPAN packet is a copied Layer 2 Ethernet frame, excluding any ISL or 802.1Q tags.
+
+                  •ERSPAN adds a 50-byte header to each copied Layer 2 Ethernet frame and replaces the 4-byte cyclic redundancy check (CRC) trailer.
+
+                  •ERSPAN supports jumbo frames that contain Layer 3 packets of up to 9,202 bytes. If the length of the copied Layer 2 Ethernet frame is greater than 9,170 (9,152-byte Layer 3 packet), ERSPAN truncates the copied Layer 2 Ethernet frame to create a 9,202-byte ERSPAN Layer 3 packet.
+
+                  •Regardless of any configured MTU size, ERSPAN creates Layer 3 packets that can be as long as 9,202 bytes. ERSPAN traffic might be dropped by any interface in the network that enforces an MTU size smaller than 9,202 bytes.
+
+                  •With the default MTU size (1,500 bytes), if the length of the copied Layer 2 Ethernet frame is greater than 1,468 bytes (1,450-byte Layer 3 packet), the ERSPAN traffic is dropped by any interface in the network that enforces the 1,500-byte MTU size.
+
+
+                  Note  The mtu interface command and the system jumbomtu command (see the "Configuring Jumbo Frame Support" section on page 9-10) set the maximum Layer 3 packet size (default is 1,500 bytes, maximum is 9,216 bytes).
+                  •All participating switches must be connected at Layer 3 and the network path must support the size of the ERSPAN traffic.
+
+                  •ERSPAN does not support packet fragmentation. The "do not fragment" bit is set in the IP header of ERSPAN packets. ERSPAN destination sessions cannot reassemble fragmented ERSPAN packets.
+
+                  •ERSPAN traffic is subject to the traffic load conditions of the network. You can set the ERSPAN packet IP precedence or DSCP value to prioritize ERSPAN traffic for QoS.
+
+                  •The only supported destination for ERSPAN traffic is an ERSPAN destination session on a PFC3.
+
+                  •All ERSPAN source sessions on a switch must use the same origin IP address, configured with the origin ip address command (see the "Configuring ERSPAN Source Sessions" section).
+
+                  •All ERSPAN destination sessions on a switch must use the same IP address on the same destination interface. You enter the destination interface IP address with the ip address command (see the "Configuring ERSPAN Destination Sessions" section).
+
+                  •The ERSPAN source session's destination IP address, which must be configured on an interface on the destination switch, is the source of traffic that an ERSPAN destination session sends to the destination ports. You configure the same address in both the source and destination sessions with the ip address command.
+
+                  •The ERSPAN ID differentiates the ERSPAN traffic arriving at the same destination IP address from various different ERSPAN source sessions.
+
+

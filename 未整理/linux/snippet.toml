@@ -1,0 +1,10 @@
+[[snippets]]
+  description = "ssh proxy"
+  command = "ssh -f -vv -N -D <local_addr>:<local_port> <usrname>@<remote_proxy_addr>"
+  output = ""
+
+[[snippets]]
+  description = "submit_git"
+  command = "cd /data/dkluffy-code/ && sh up.sh"
+  output = ""
+

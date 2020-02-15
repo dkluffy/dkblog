@@ -1,0 +1,55 @@
+如何将Windows 7的无线网卡配置成一个软无线AP？
+
+其实windows 7设计之初就为这个奠定了基础。以前曾利用移动赠送的wlan做过试验，效果不错，写出来共大家分享。
+
+原本的有线共享在windows 7下就是很简单的事情，当然无线共享同样突出了windows的易用性。
+
+1.首先保证你是windows 7系统，xp无能为力了，它本身就不支持虚拟。
+
+2.以管理员身份打开命令行窗口（方法很多，比较容易的是在运行框里输入cmd按住ctrl+shift同时按回车），然后输入下面的命令
+
+netsh wlan set hostednetwork mode=allow ssid="你自己起的名字，英文" key=你设的密码
+
+这时你就会在网络与共享中心的更改适配器设置里面看到多了一个无线网络连接（一般叫做无线网络连接2可能也是其他名字），
+
+好了，这就是我们用来共享wlan的虚拟网卡。
+
+3.启动无线承载网络
+
+netsh wlan start hostednetwork
+
+4.单击你真正的无线网卡，属性→共享→允许其他网络用户...→下面选成你的虚拟网卡就行。
+
+5.这样你就可以用其他设备连接你建立的无线网了，名称就是你上面设置的ssid，密码就是key的值
+
+这个网络建好以后是可以复用的，不用的时候可以停止。
+
+下面附上停止命令和其他相关命令，这些我都亲自试验过，保证安全。
+
+
+显示你的无线承载网络的信息
+
+netsh wlan show hostednetwork
+
+停止你的无线承载网络
+
+netsh wlan stop hostednetwork
+
+更改密码
+netsh wlan set hostednetwork key="你的密码"
+
+如果想密码立即生效可以用
+
+netsh wlan refresh hostednetwork key
+
+更改网络名称
+
+netsh wlan set hostednetwork ssid="你的名称"
+
+最后就是你真的不用这个无线网络了，你停止之后，也不想看到多出来的那块无线网卡，那么就执行
+
+netsh wlan set hostednetwork mode=
+
+就再也看不到那块网卡了，当然你想重新开启的话就执行
+
+netsh wlan set hostednetwork mode=allow

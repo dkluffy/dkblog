@@ -1,0 +1,19 @@
+cd /usr/lib/vmware/modules/source
+tar xf vmmon.tar
+mv vmmon.tar vmmon.old.tar
+sed -i 's/uvAddr, numPages, 0, 0/uvAddr, numPages, 0/g' vmmon-only/linux/hostif.c
+tar cf vmmon.tar vmmon-only
+rm -r vmmon-only
+
+tar xf vmnet.tar
+mv vmnet.tar vmnet.old.tar
+sed -i 's/addr, 1, 1, 0/addr, 1, 0/g' vmnet-only/userif.c
+tar cf vmnet.tar vmnet-only
+rm -r vmnet-only
+
+apt-get install linux-headers-`uname -r`
+vmware-modconfig --console --install-all
+
+VMware-VIX-1.15.7-5115892.x86_64.bundle (must have)
+
+vmrun -T player start win7.vmx nogui

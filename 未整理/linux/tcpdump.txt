@@ -1,0 +1,30 @@
+$tcpdump -s 0 -A -v -i eth0 -w a.cap
+$tcpdump -w comm.pcap -i eth0 dst 16.181.170.246 and port 22
+
+#Capture only N number of packets using tcpdump -c
+tcpdump -c 2 -i eth0
+
+#Display Captured Packets in ASCII using tcpdump -A
+tcpdump -A -i eth0
+
+#Display Captured Packets in HEX and ASCII using tcpdump -XX
+tcpdump -XX -i eth0
+
+#Reading the packets from a saved file using tcpdump -r
+tcpdump -tttt -r data.pcap
+
+# Capture packets with IP address using tcpdump -n
+tcpdump -n -i eth0
+
+#Capture packets with proper readable timestamp using tcpdump -tttt
+tcpdump -n -tttt -i eth0
+
+#Read packets longer than N bytes
+tcpdump -w g_1024.pcap greater 1024
+
+# Receive only the packets of a specific protocol type
+tcpdump -i eth0 arp
+
+#Read packets lesser than N bytes
+tcpdump -w l_1024.pcap  less 1024
+

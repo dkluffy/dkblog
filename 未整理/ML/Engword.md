@@ -1,0 +1,7 @@
+- ordinary least squares  普通最小二乘
+- polynomial 多项式
+- analogous 类似的
+- Hierarchical clustering 分层聚类
+- outlier 离群值
+- consecutive 连续的
+- Synthesis 合成

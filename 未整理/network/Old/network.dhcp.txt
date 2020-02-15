@@ -1,0 +1,173 @@
+DHCP过程描述(双版本)
+2008年09月08日 10:06
+（傻瓜版）在开启了 DHCP 服务的网络中，一台电脑开机获取 IP 一般需要以下 4 个过程
+
+一、发现，Discover
+向整个网络广播：“大家好，我是新来的（假设MAC=22:22:22:22:22:22），谁是DHCP服务器？请为我分配IP”
+过程：
+ETH －22:22:22:22:22:22 => FF:FF:FF:FF:FF:FF (广播，因为不知道谁是服务器)
+IP信息－源 0.0.0.0:68 目标 255.255.255.255:67(自己没有合法IP，也不知道服务器IP)
+
+二、提供，offer
+网络上的DHCP服务器收到广播后检查自己的地址池是否有可用IP，如有就回答：
+“你好，我是DHCP服务器（假设IP=192.168.1.1，MAC=11:11:11:11:11:11），给你分配IP为192.168.1.100”
+过程：
+ETH －11:11:11:11:11:11 <= 22:22:22:22:22:22 (点到点应答)
+IP信息－192.168.1.100:68 <= 192.168.1.1:67
+
+三、选择，request
+网络上可能有多个DHCP服务器都会对Discover广播回应，客户机总是选择最先回应的那台服务器分配的IP
+于是客户机再次广播：“谢谢，我将使用 192.168.1.100 这个IP，其它服务器为我分配的IP请收回”
+过程：
+ETH －22:22:22:22:22:22 => FF:FF:FF:FF:FF:FF (广播，以便通知其它服务器，名花已有主，秋天的菠菜请节约使用)
+IP信息－0.0.0.0:68 => 255.255.255.255:67　(分配的IP还不能使用，仍使用 0.0.0.0)
+
+四、确认，ack
+第一个回应的DHCP服务器看到选择广播后，心花怒放，高兴的回答：
+“好，你可以使用 192.168.1.100 了（小子，从此你就是本网的低等下人，192.168.1.100 就是你的临时代号）”
+过程：
+ETH －11:11:11:11:11:11 <= 22:22:22:22:22:22 (点到点应答)
+IP信息－192.168.1.100:68 <= 192.168.1.1:67
+
+经过了上述4步后，客户机才可以将TCP/IP协议与网卡绑定，这样客户就成功的加入了一个子网。
+
+ 
+
+（专业版）DHCP协议原理
+
+DHCP（Dynamic Host Configuration Protocol，动态主机配置协议）是IETF为实现IP的自动配置而设计的协议，它可以为客户机自动分配IP地址、子网掩码以及缺省网关、DNS服务器的IP地址等TCP/IP参数。了解DHCP工作过程可以帮助我们排除有关DHCP服务遇到的问题。DHCP 协议是基于UDP层之上的应用，本文结合抓报所得数据分析DHCP协议实现原理
+
+一、先了解一下需要抓取的DHCP报文
+
+客户发出的IP租用请求报文
+
+DHCP客户机初始化TCP/IP，通过UDP端口67向网络中发送一个DHCPDISCOVER广播包，请求租用IP地址。该 广播包中的源IP地址为0.0.0.0，目标IP地址为255.255.255.255；包中还包含客户机的MAC地址和计算机名。
+
+DHCP回应的IP租用提供报文
+
+任何接收到DHCPDISCOVER广播包并且能够提供IP地址的DHCP服务器，都会通过UDP端口68给客户机回应一个DHCPOFFER广播包，提供一个IP地址。该广播包的源IP地址为DCHP服务器IP，目标IP地址为255.255.255.255；包中还包含提供的IP地址、子网掩码及租期等信息。
+
+客户选择IP租用报文
+
+客户机从不止一台DHCP服务器接收到提供之后，会选择第一个收到的DHCPOFFER包，并向网络中广播一个 DHCPREQUEST消息包，表明自己已经接受了一个DHCP服务器提供的IP地址。该广播包中包含所接受的IP地址和服务器的IP地址。 所有其他的DHCP服务器撤消它们的提供以便将IP地址提供给下一次IP租用请求。
+
+DHCP服务器发出IP租用确认报文
+
+被客户机选择的DHCP服务器在收到DHCPREQUEST广播后，会广播返回给客户机一个DHCPACK消息包，表明已经接受客户机的选择，并将这一IP地址的合法租用以及其他的配置信息都放入该广播包发给客户机。
+
+客户配置成功后发出的公告报文
+
+客户机在收到DHCPACK包，会使用该广播包中的信息来配置自己的TCP/IP，则租用过程完成，客户机可以在网络中通信。
+
+至此一个客户获取IP的DHCP服务过程基本结束，不过客户获取的IP一般是用租期，到期前需要更新租期，这个过程是通过租用更新数据包来完成的。
+
+客户IP租用更新报文
+
+（1）在当前租期已过去50%时，DHCP客户机直接向为其提供IP地址的DHCP服务器发送DHCPREQUEST消息包。如果客户机接收到该服务器回应的DHCPACK消息包，客户机就根据包中所提供的新的租期以及其它已经更新的TCP/IP参数，更新自己的配置，IP租用更新完成。如果没收到该服务器的回复，则客户机继续使用现有的IP地址，因为当前租期还有50%。 
+
+（2）如果在租期过去50%时未能成功更新，则客户机将在当前租期过去87.5%时再次向为其提供IP地址的DHCP联系。如果联系不成功，则重新开始IP租用过程。
+
+（3）如果DHCP客户机重新启动时，它将尝试更新上次关机时拥有的IP租用。如果更新未能成功，客户机将尝试联系现有IP租用中列出的缺省网关。如果联系成功且租用尚未到期，客户机则认为自己仍然位于与它获得现有IP租用时相同的子网上（没有被移走）继续使用现有IP地址。 如果未能与缺省网关联系成功，客户机则认为自己已经被移到不同的子网上，将会开始新一轮的IP租用过程。
+
+
+DHCP客户机在发出IP租用请求的DHCPDISCOVER广播包后，将花费1秒钟的时间等待DHCP服务器的回应，如果1秒钟没有服务器的回应，它会将这一广播包重新广播四次（以2，4，8和16秒为间隔，加上1~1000毫秒之间随机长度的时间）。四次之后，如果仍未能收到服务器的回应，则运行Windows 2000的DHCP客户机将从169.254.0.0/16这个自动保留的私有IP地址（APIPA）中选用一个IP地址，而运行其他操作系统的DHCP客户机将无法获得IP地址。DHCP客户机仍然每隔5分钟重新广播一次，如果收到某个服务器的回应，则继续IP租用过程。
+
+二、抓包分析
+
+用户从DHCP获取IP过程如下：
+
+1、 用户发出DHCPDISCOVER报文；
+
+开始抓报文时首先执行的IPCONFIG/RELEASE命令的作用是用来释放IP，这条报文后面分析，在释放IP后执行的更新IP命令IPCONFIG/RENEW将发起一个DHCP过程，分析从这里开始。现在，客户机没有地址，它就会发出一个DHCPDiscover报文，该报文是广播报文，所有的具有DHCP Server功能的服务器都会收到该报文。
+该报文是在链路层中发的广播报文，由于DHCP协议是初始化协议，更简单的说，就是让终端获取IP 地址的协议，既然终端连IP地址都没有，何以能够发出IP报文呢？
+
+为了解决这个问题，DHCP报文的封装采取了如下措施：
+
+1）、首先链路层的封装必须是广播形式，即让在同一物理子网中的所有主机都能够收到这个报文。在Ethernet_II格式的网络中，就是目标MAC为全1。
+
+2）、由于终端没有IP地址，IP头中的原IP规定填为全0。
+
+3）、当终端发出DHCP请求报文，它并不知道DHCP SERVER的IP地址，因此IP头中的目标IP填为子网广播IP——全1，以保证DHCP SERVER的IP协议栈不丢弃这个报文。
+
+4）、上面的措施保证了DHCP SERVER能够收到终端的请求报文，但仅凭链路层和IP层信息，DHCP SERVER无法区分出DHCP报文，因此终端发出的DHCP请求报文的UDP层中的源端口为68，目标端口DstPort为67。即DHCP SERVER通过知名端口号67来判断一个报文是否是DHCP报文。
+
+5）.DHCP协议的报文中主要数据格式详解
+Boot record type为1时表示是Client的请求，为2时表示是Server的应答。
+Hardware address typeClient 的网络硬件地址类型，1表示Client 的网络硬件是10MB的以太网类型
+/Hardware address lengthClient 的网络硬件地址长度，6表示Client 的网络硬件地址长度是6bytes（即以太网类型的6bytes的MAC地址）。
+HOPS跳数，表示当前的DHCP报文经过的DHCP RELAY（中级）的数目，每经过一个DHCP中继，此字段就会加1，此字段的作用是限制DHCP报文不要经过太多的DHCP RELAY，协议规定，当“hops”大于4（现在也有规定为16）时，这个DHCP报文就不能再进行处理，而是丢弃。
+Transaction id事务ID，Client每次发送DHCP请求报文时选择的随机数，用来匹配server的响应报文是对哪个请求报文的响应。Client会丢弃“ID”不匹配的响应报文。
+
+Elapsed boot time秒数，用来表示client开始DHCP请求后的时间流逝秒数
+flags标志，在 BOOTP中此字段是保留不用的，在DHCP协议中也只使用了其左边的最高位。
+Client self-assigned IPaddress客户机IP地址
+Client IP address server分配给client的IP地址
+Next Server to use in bootstrap服务器IP地址
+Relay AgentDHCP中继代理IP地址
+Client hardware address客户机硬件地址MAC
+Host name 服务器的主机名
+Boot file nameClient 的启动配置文件名
+
+Vendor Information tag选项字段，此字段中包含了大量可选的终端初始配置信息和网络配置信息，对于BOOTP协议，此字段为64bytes，对于DHCP协议，此字段为64---312 bytes。其中最常用的选项列表如下：
+
+Dhcp message typecode = 53， length = 1， value= 1-8，此字段表示DHCP报文类型
+Router Ipcode = 3， length = IP地址长度， value=client的默认网关的 IP地址；
+DNS Ipcode = 6， length = IP地址长度的倍数， value= client的DNS服务器的IP地址序列； 
+Wins Ipcode = 44， length = IP地址长度的倍数， value= client的WINS服务器的 IP地址序列； 
+Client idcode = 61，length = client的网络硬件地址的长度＋2，value=“htype”+“hlen”+ client的硬件地址；
+server idcode = 54， length = IP地址长度， value= DHCP SERVER的IP地址；
+
+
+其中我们要注意Transaction ID＝CF04CD61和DHCP Message Type一项中type＝Discover，前一项表示会话ID，即DHCP Server发回的响应报文中该结构的数值要与发出去的DHCP Discover中的该结构数值一样，后一项说明DHCP报文类型为Discover类型报文。
+
+2 、DHCP SERVER回送DHCPOFFER报文
+DHCPOFFER报文是单播而不是广播，报文明确给出了目标MAC和IP。其实，DHCP SERVER给终端的响应报文是根据DHCP报文中的内容决定是广播还是单播，一般都是广播形式。通讯源端口是67，目标端口为68，客户端通过端口号68来判断一个报文是否是DHCP SERVER的响应报文，Transaction ID＝CF04CD61，表示这个报文是与图DHCP7中的DHCPDiscover报文相关的报文，因为二者标示一致。
+从DHCP Server回应的DHCPOffer报文中我们还可以得到DHCP拟分配给客户端的初始配置信息和网络配置信息，其中
+
+Client self-assigned IP address =0.0.0.0表示客户机还没有使用该地址
+Client server-assigned IP address =10.177.124.73表示DHCP Server分配给该客户机的IP地址 
+Server IP Server会发出回应
+DHCP Message Typee＝DHCP Offer表示这是一个对DHCPDiscover的回应报文
+Request IP address lease time =6000 表示租期是100分钟
+Domain Name Server=218.29.0.251域名服务器地址
+Gateway address=10.177.124.254网关地址
+Subnet mask=255.255.255.0 表示这个地址的网段是一个标准的C类地址网段
+
+所有发送DHCP Offer信息包的服务器将保留它们提供的一个IP地址。在该地址不再保留之前，该地址不能分配给其他的客户。
+
+
+3、用户发出DHCPREQUEST报文
+客户以广播的方式发送DHCP Request信息包作为响应。注意其中的DHCP Message Type一项中type＝Request表示这是一个请求报文。
+客户利用DHCP Request询问服务器其它的配置选项，如：DNS或网关地址
+
+4、DHCP SERVER回送DHCPACK报文
+
+该信息包是以单播的方式发送的。当服务器接收到DHCP Request信息包时，它以一个DHCP Acknowledge信息作为响应，其内容同DHCPOFFER类似，并在“选项”字段中增加了IP地址使用租期选项。
+
+5、宣告确认
+
+CLIENT收到DHCPACK报文后（经过上面的处理后，有且只有一个DHCPACK报文），会检查DHCP SERVER分配给自己的IP地址是否能够使用，如在以太网类型的网络中，CLIENT会发出一个ARP请求来确定DHCP SERVER分配的IP地址是否已经被别人使用，如果可以使用，则CLIENT成功获得IP地址，并根据IP地址使用租期自动启动续延过程。
+
+6、DHCP协议报文的种类
+
+前面反复提到DHCP Message Type项，这里列出所有DHCP协议报文的种类。DHCP协议采用CLIENT-SERVER方式进行交互，其报文格式共有8种，具体含义如下：
+
+1）DHCPDISCOVER（0x01），此为Client开始DHCP过程的第一个报文
+
+2）DHCPOFFER（0x02），此为Server对DHCPDISCOVER报文的响应
+
+3）DHCPREQUEST（0x03），此报文是Slient开始DHCP过程中对server的DHCPOFFER报文的回应，或者是client续延IP地址租期时发出的报文
+
+4）DHCPDECLINE（0x04），当Client发现Server分配给它的IP地址无法使用，如IP地址冲突时，将发出此报文，通知Server禁止使用IP地址
+
+5）DHCPACK（0x05），Server对Client的DHCPREQUEST报文的确认响应报文，Client收到此报文后，才真正获得了IP地址和相关的配置信息。
+
+6）DHCPNAK（0x06），Server对Client的DHCPREQUEST报文的拒绝响应报文，Client收到此报文后，一般会重新开始新的DHCP过程。
+
+7）DHCPRELEASE（0x07），Client主动释放server分配给它的IP地址的报文，当Server收到此报文后，就可以回收这个IP地址，能够分配给其他的Client。
+
+8）DHCPINFORM（0x08），Client已经获得了IP地址，发送此报文，只是为了从DHCP SERVER处获取其他的一些网络配置信息，如route ip，DNS Ip等，这种报文的应用非常少见。
+
+如：运行IPCONFIG/RELEASE后，PC会发出释放IP的报文，DHCP Message Type是7，他的作用是主动释放server分配给它的IP地址的报文，Server收到此报文后，就可以回收这个IP地址，能够分配给其他的Client。
+
+如果一台客户机未从该DHCP服务器获取过地址，或者它获得的地址已过期，那么它将需要经过全部四个步骤才能得到一个IP地址。

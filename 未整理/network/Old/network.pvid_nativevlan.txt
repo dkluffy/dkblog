@@ -1,0 +1,21 @@
+PVID/NATIVE VLAN
+1、Acess端口：（PVID=VID）
+a)  收到一个报文（主机等发进交换机）,判断是否有VLAN信息：如果没有则打上端口的PVID ，并进行交换转发。 
+    如果有则直接丢弃（缺省）.
+b)  发报文（发出交换机）：将报文的VLAN信息剥离，直接发送出去.
+
+2、TRUNK口：（PVID=NATIVE VID）
+
+802.1Q：
+<802.1Q标签>：[DEST | SRC ] <TAG:VLAN ID> [ .....]
+
+Frames belonging to the native VLAN do NOT carry VLAN tags when sent over the trunk. （带NATIVE VLAN 的帧，会被剥掉 标签 再发送出去）
+Conversely, if an untagged frame is received on a trunk port, the frame is associated with the Native VLAN for this port.（相反的，TRUNK口收到没有标签的帧 会给它打上NATIVE VLAN的802.1Q的标签）
+For example, if an 802.1Q port has VLANs 2, 3 and 4 assigned to it with VLAN 2 being the Native VLAN.
+Frames on VLAN 2 that egress (exit) the aforementioned port are not given an 802.1Q header (i.e. they are plain Ethernet frames). ]
+Frames which ingress (enter) this port and have no 802.1Q header are put into VLAN 2. 
+Behaviour of traffic relating to VLANs 3 & 4 is as to be expected - frames arriving for VLANs 3 & 4 are expected to be carrying tags that identify them so, and frames leaving the port for VLANs 3 & 4 will carry their respective VLAN tag.
+
+CISCO ISL：
+TRUNK口 ：接收到帧如果没标签，就丢弃。
+TRUNK口 ：发送的所有帧都会被封装。

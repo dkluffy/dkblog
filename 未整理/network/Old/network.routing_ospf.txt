@@ -1,0 +1,55 @@
+*At a very high level, the operation of OSPF is easily explained:
+    1.OSPF-speaking routers send Hello packets out all OSPF-enabled interfaces. If two routers sharing a common data link agree on certain parameters specified in their respective Hello packets, they will become neighbors.
+
+    2.Adjacencies(邻接关系), which can be thought of as virtual point-to-point links, are formed between some neighbors. OSPF defines several network types and several router types. The establishment of an adjacency is determined by the types of routers exchanging Hellos and the type of network over which the Hellos are exchanged.
+    **An adjacency is established in four general phases:
+
+        -Neighbor discovery.
+
+        -Bidirectional communication. This communication is accomplished when two neighbors list each other's Router IDs in their Hello packets.
+
+        -Database synchronization. Database Description, Link State Request, Link State Update, and Link State Acknowledgement packets (described in a later section) are exchanged to ensure that both neighbors have identical information in their link-state databases. For the purposes of this process, one neighbor will become the master and the other will become the slave. As the name implies, the master will control the exchange of Database Description packets.
+
+        -Full adjacency.
+
+
+
+    3.Each router sends link-state advertisements (LSAs) over all adjacencies. The LSAs describe all of the router's links, or interfaces, the router's neighbors, and the state of the links. These links might be to stub networks (networks with no other router attached), to other OSPF routers, to networks in other areas, or to external networks (networks learned from another routing process). Because of the varying types of link-state information, OSPF defines multiple LSA types.
+
+    4.Each router receiving an LSA from a neighbor records the LSA in its link-state database and sends a copy of the LSA to all of its other neighbors.
+
+    5.By flooding LSAs throughout an area, all routers will build identical link-state databases.
+
+    6.When the databases are complete, each router uses the SPF algorithm to calculate a loop-free graph describing the shortest (lowest cost) path to every known destination, with itself as the root. This graph is the SPF tree.
+
+    7.Each router builds its route table from its SPF tree
+
+
+
+*OSPF defines five network types:
+    1.Point-to-point networks: such as a T1, DS-3, or SONET link, connect a single pair of routers. Valid neighbors on point-to-point networks will always become adjacent. The destination address of OSPF packets on these networks will always be the reserved class D address 224.0.0.5, known as AllSPFRouters.
+    2.Broadcast networks:such as Ethernet, Token Ring, and FDDI, might be better defined as broadcast multi-access networks to distinguish them from NBMA networks. Broadcast networks are multi-access in that they are capable of connecting more than two devices, and they are broadcast in that all attached devices can receive a single transmitted packet. OSPF routers on broadcast networks will elect a DR and a BDR, as described in the next section, "Designated Routers and Backup Designated Routers." Hello packets are multicast with the AllSPFRouters destination address 224.0.0.5, as are all OSPF packets originated by the DR and BDR. The destination Media Access Control (MAC) identifier of the frames carrying these packets is 0100.5E00.0005. All other routers will multicast link-state update and link-state acknowledgment packets (described later) to the reserved class D address 224.0.0.6, known as AllDRouters. The destination MAC identifier of the frames carrying these packets is 0100.5E00.0006.
+    3.Nonbroadcast Multiaccess (NBMA) networks:such as X.25, Frame Relay, and ATM, are capable of connecting more than two routers but have no broadcast capability. A packet sent by one of the attached routers would not be received by all other attached routers. As a result, extra configuration might be necessary for routers on these networks to acquire their neighbors. OSPF routers on NBMA networks elect a DR and BDR, and all OSPF packets are unicast.
+    4.Point-to-multipoint networks:are a special configuration of NBMA networks in which the networks are treated as a collection of point-to-point links. Routers on these networks do not elect a DR and BDR, and the OSPF packets are unicast to each known neighbor.
+    5.Virtual links:are special configurations that are interpreted by the router as unnumbered point-to-point networks. OSPF packets are unicast over virtual links.
+
+
+NSSA :not-so-stubby areas
+
+LSA types:
+    1-Router LSA
+    2-Network LSA
+    3-Network Summary LSA
+    4-ASBR Summary LSA
+    5-AS External LSA
+    6-Group Membership LSA
+    7-NSSA Externat
+    8-External Attributes LSA
+    9-Opaque LSA (link-local scope)
+    10-Opaque LSA (area-local scope)
+    11-Opaque LSA (AS scope)
+OSPF COST = 100,000,000/BANDWIDTH
+
+*AD：有如路由的可信度，越大越不可信。比如路由器会优先选择AD=100的IGRP,而不是AD=110的OSPF的路由。
+    这与COST无关。
+

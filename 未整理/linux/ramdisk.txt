@@ -1,0 +1,56 @@
+for windows:
+    imdisk : http://www.ltr-data.se/opencode.html/
+    example: imdisk -a -t vm -m g: -o rw -s 2048M   -p "/fs:ntfs /q /y"
+        #BTW: netsh -c "i i" add neighbors 11 192.168.1.1 f4-ec-38-11-91-24
+    add to start:  gpedit.msc
+
+for linux:
+    mount /dev/shm/dir
+    or /etc/fstab : tmpfs
+    add to start: multiuser--> /etc/rc.d/rc.local or /etc/rc.local
+
+
+
+####for firefox:
+    in "about:config" add this string:
+        browser.cache.disk.parent_directory;g:\
+
+##script:
+#!/bin/bash
+if [ ! -e /home/dkluffy/.mozilla/firefox ];then
+rsync -avi --delete /home/dkluffy/.mozilla.hd/ /home/dkluffy/.mozilla/ 
+fi
+
+/usr/bin/firefox
+rsync -avi --delete /home/dkluffy/.mozilla/ /home/dkluffy/.mozilla.hd/
+echo "Done! Exit!"
+sleep 3
+
+
+
+
+
+####for chrome:
+    chrome.exe --disk-cache-dir="g:\chrome" --disk-cache-size=1024000000
+
+##script:
+#!/bin/bash
+if [ ! -e /dev/shm/chrome-cache ];then
+mkdir -p /dev/shm/chrome-cache
+mkdir -p /dev/shm/chrome-config
+chown -R  dkluffy:dkluffy /dev/shm/chrome-cache 
+chown -R  dkluffy:dkluffy /dev/shm/chrome-config 
+rsync -avi --delete /home/dkluffy/.cache/google-chrome/ /dev/shm/chrome-cache/
+rsync -avi --delete /home/dkluffy/.config/google-chrome/ /dev/shm/chrome-config/
+restorecon -v /dev/shm/chrome-config/
+fi
+
+google-chrome --enable-logging  --user-data-dir=/dev/shm/chrome-config --disk-cache-dir=/dev/shm/chrome-cache/ --disk-cache-size=1024000000
+#google-chrome --enable-logging  --disk-cache-dir=/dev/shm/chrome-cache/ --disk-cache-size=1024000000
+
+rsync -avi --delete  /dev/shm/chrome-cache/ /home/dkluffy/.cache/google-chrome/
+rsync -avi --delete  /dev/shm/chrome-config/ /home/dkluffy/.config/google-chrome/
+
+echo "Done! Exit!"
+sleep 3
+

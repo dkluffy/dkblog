@@ -1,0 +1,10 @@
+def float_to_hex(f):
+    return hex(struct.unpack('<I', struct.pack('<f', f))[0])
+
+float_to_hex(17.5)    # Output: '0x418c0000'
+We can do the same for double, knowing that it is 64 bits:
+
+def double_to_hex(f):
+    return hex(struct.unpack('<Q', struct.pack('<d', f))[0])
+
+double_to_hex(17.5)   # Output: '0x4031800000000000L'

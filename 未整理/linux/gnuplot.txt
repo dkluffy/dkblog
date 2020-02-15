@@ -1,0 +1,10 @@
+gnuplot <<EOF
+ set style data  linespoints
+ show timestamp
+ set terminal png
+ set output /tmp/out.png
+ set xlabel "time (seconds)"
+ set ylabel "Segments (cwnd, ssthresh)"
+ plot "/tmp/tcpprobe.out" using 1:7 title "snd_cwnd", \
+      "/tmp/tcpprobe.out" using 1:($8>=2147483647 ? 0 : $8) title "snd_ssthresh"
+EOF
