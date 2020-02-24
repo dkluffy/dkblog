@@ -8,34 +8,21 @@ import sys
 from time import sleep
 import logging
 
-
-ASA_MORE="--- More ---"
-IOS_MORE="--More--"
-MORE_LINE=[IOS_MORE,ASA_MORE]
-
-
-WTIME=1
-RBYTES=1024
-
-EOF="#"
-TMP_EOF=">"
-
 TEL_UNTIL_USER="ername: "
 TEL_UNTIL_PASSWORD="sword: "
 
 class IOSClient:
-    def __init__(self,host,port=23,more_line=IOS_MORE):
+    def __init__(self,host,port=23):
         self.client = None
         self.host = host
         self.port = port
-        self.more_line = more_line
         self.timeout = 10
         self.disable_more = True
         
 
     def open(self):
         self.client=telnetlib.Telnet(self.host,self.port,self.timeout)
-        self.client.set_debuglevel(7)
+        #self.client.set_debuglevel(7)
         #self.client.set_option_negotiation_callback(set_max_window_size)
 
 
@@ -51,7 +38,7 @@ class IOSClient:
     def con0_show(self,cmds,promot="#"):
         """
           这个在少数情况下有用，比如在IOU实验下；
-          这个时候，虽然用telnet连过去，时间上连的时console.
+          这个时候，虽然用telnet连过去，实际上连的是console.
         """
         result = []
         if self.disable_more:  
@@ -61,6 +48,7 @@ class IOSClient:
             self.write("\n") 
             self.write("enable")
             self.read_until(promot)
+            #防止出现 --more-- 这个玩意，处理起来很麻烦，干脆屏蔽它
             self.write("terminal length 0")
             self.read_until(promot)
 
