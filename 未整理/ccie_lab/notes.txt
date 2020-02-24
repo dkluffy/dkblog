@@ -1,4 +1,0 @@
-#The VLANs that were just created are appearing when typing the show vlan command. 
-However, the configuration of the VLANs is not appearing in the running--‐configuration file.
- This is due to the fact that the default VTP    mode is set to server. 
-
